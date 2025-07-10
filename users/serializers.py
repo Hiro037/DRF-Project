@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from users.models import Payment, User
 from materials.models import Course, Lesson
@@ -18,3 +19,20 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'email', 'pfp', 'phone_number', 'city', 'payments']
+
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ['email', 'password']  # убираем 'username'
+
+    def create(self, validated_data):
+        email = validated_data.get('email')
+        password = validated_data.get('password')
+
+        user = User.objects.create_user(
+            email=email,
+            password=password
+        )
+        return user

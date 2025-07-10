@@ -1,11 +1,14 @@
-from rest_framework import viewsets
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
+from rest_framework.generics import CreateAPIView
+from rest_framework.permissions import AllowAny
+from rest_framework.viewsets import ModelViewSet
+
 from users.models import Payment, User
-from .serializers import PaymentSerializer, UserSerializer
+from .serializers import PaymentSerializer, UserSerializer, UserRegistrationSerializer
 from .filters import PaymentFilter
 
-class PaymentViewSet(viewsets.ModelViewSet):
+class PaymentViewSet(ModelViewSet):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
     filter_backends = [DjangoFilterBackend, OrderingFilter]
@@ -16,7 +19,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Payment.objects.all().select_related('user', 'course', 'lesson')
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
@@ -25,3 +28,12 @@ class UserViewSet(viewsets.ModelViewSet):
         if self.request.user.is_authenticated:
             return User.objects.filter(id=self.request.user.id)
         return User.objects.none()  # Если не авторизован, возвращаем пустой queryset
+
+class UserRegistrationAPIView(CreateAPIView):
+    serializer_class = UserRegistrationSerializer
+    permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        user = serializer.save(is_active=True)
+        user.set_password(user.password)
+        user.save()

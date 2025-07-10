@@ -3,6 +3,8 @@ from django.db import models
 
 from materials.models import Lesson, Course
 
+from users.managers import UserManager
+
 
 class User(AbstractUser):
     username = None
@@ -30,6 +32,8 @@ class User(AbstractUser):
         verbose_name="Город",
         help_text="Укажите город",
     )
+
+    objects = UserManager()
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

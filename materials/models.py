@@ -1,5 +1,7 @@
 from django.db import models
 
+from config import settings
+
 
 class Course(models.Model):
     title = models.CharField(
@@ -12,6 +14,11 @@ class Course(models.Model):
     )
     description = models.TextField(
         verbose_name="Описание", help_text="Введите описание курса"
+    )
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='courses'
     )
 
     def __str__(self):
