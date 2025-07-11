@@ -1,20 +1,16 @@
 from rest_framework.routers import SimpleRouter
-from django.urls import path
+from django.urls import path, include
 
 from materials.apps import MaterialsConfig
-from materials.views import CourseViewSet, LessonListAPIView, LessonCreateAPIView, LessonUpdateAPIView, LessonDestroyAPIView, LessonRetrieveAPIView
+from materials.views import CourseViewSet, LessonViewSet
 
 router = SimpleRouter()
-router.register('', CourseViewSet)
+router.register(r'courses', CourseViewSet, basename='course')
+router.register(r'lessons', LessonViewSet, basename='lesson')
+
 
 app_name = MaterialsConfig.name
 
 urlpatterns = [
-    path('lessons/', LessonListAPIView.as_view(), name='lesson_list'),
-    path('lessons/<int:pk>/', LessonRetrieveAPIView.as_view(), name='lesson_retrieve'),
-    path('lessons/<int:pk>/delete/', LessonDestroyAPIView.as_view(), name='lesson_delete'),
-    path('lessons/<int:pk>/update/', LessonUpdateAPIView.as_view(), name='lesson_update'),
-    path('lessons/create/', LessonCreateAPIView.as_view(), name='lesson_create'),
+    path('', include(router.urls)),  # Подключаем все маршруты из роутера
 ]
-
-urlpatterns += router.urls

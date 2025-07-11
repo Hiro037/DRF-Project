@@ -51,6 +51,11 @@ class Lesson(models.Model):
         help_text="Выберите курс",
 
     )
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='lessons'
+    )
 
     def __str__(self):
         return self.title
