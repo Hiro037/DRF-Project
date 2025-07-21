@@ -15,6 +15,7 @@ pillow = "^11.2.1"
 black = "^25.1.0"
 django-filter = "^25.1"
 djangorestframework-simplejwt = "^5.5.0"
+coverage = "^7.9.2"
 
 
 [build-system]

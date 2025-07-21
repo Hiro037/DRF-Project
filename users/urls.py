@@ -5,7 +5,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from users.views import UserRegistrationAPIView
 
 from users.apps import UsersConfig
-from users.views import UserViewSet, PaymentViewSet
+from users.views import UserViewSet, PaymentViewSet, SubscriptionView
 
 
 app_name = UsersConfig.name
@@ -20,5 +20,6 @@ urlpatterns = [
     path('login/', TokenObtainPairView.as_view(), name='login'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('register/', UserRegistrationAPIView.as_view(), name='register'),
+    path('subscribe/', SubscriptionView.as_view(), name='subscribe'),
     path('', include(router.urls)),  # Подключаем все маршруты из роутера
 ]

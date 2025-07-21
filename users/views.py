@@ -1,10 +1,15 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
+from django.shortcuts import get_object_or_404
 
-from users.models import Payment, User
+from materials.models import Course
+from users.models import Payment, User, Subscription
 from .serializers import PaymentSerializer, UserSerializer, UserRegistrationSerializer
 from .filters import PaymentFilter
 
@@ -37,3 +42,23 @@ class UserRegistrationAPIView(CreateAPIView):
         user = serializer.save(is_active=True)
         user.set_password(user.password)
         user.save()
+
+class SubscriptionView(APIView):
+    def post(self, request, *args, **kwargs):
+        user = request.user  # Получаем текущего пользователя из запроса
+        course_id = request.data.get('course_id')  # Получаем ID курса из тела запроса
+        course = get_object_or_404(Course, id=course_id)  # Получаем объект курса или 404
+
+        # Проверяем наличие подписки
+        subs_item = Subscription.objects.filter(user=user, course=course)
+
+        if subs_item.exists():
+            # Если подписка есть, удаляем её
+            subs_item.delete()
+            message = 'подписка удалена'
+        else:
+            # Если подписки нет, создаём её
+            Subscription.objects.create(user=user, course=course)
+            message = 'подписка добавлена'
+
+        return Response({"message": message}, status=status.HTTP_200_OK)
