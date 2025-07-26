@@ -20,6 +20,7 @@ class Course(models.Model):
         on_delete=models.CASCADE,
         related_name='courses'
     )
+    price = models.DecimalField(max_digits=8, decimal_places=2)
 
     def __str__(self):
         return self.title
@@ -56,6 +57,7 @@ class Lesson(models.Model):
         on_delete=models.CASCADE,
         related_name='lessons'
     )
+    price = models.DecimalField(max_digits=8, decimal_places=2)
 
     def __str__(self):
         return self.title

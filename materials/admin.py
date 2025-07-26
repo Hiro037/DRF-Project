@@ -6,6 +6,7 @@ from .models import Course, Lesson
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
     list_display = (
+        "id",
         "title",
         "image",
         "description",
@@ -16,6 +17,7 @@ class CourseAdmin(admin.ModelAdmin):
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
     list_display = (
+        "id",
         "title",
         "image",
         "description",

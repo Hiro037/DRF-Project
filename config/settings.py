@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "materials",
     "django_filters",
     'rest_framework_simplejwt',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
@@ -155,3 +156,6 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
+
+#Настройки для Stripe
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
