@@ -33,8 +33,8 @@ class PaymentViewSet(ModelViewSet):
         return Payment.objects.none()
 
     def create(self, request, *args, **kwargs):
-        course_id = request.data.get("course_id")
-        lesson_id = request.data.get("lesson_id")
+        course_id = request.data.get("course")
+        lesson_id = request.data.get("lesson")
         payment_method = request.data.get("payment_method")
 
         if not self.request.user.is_authenticated:

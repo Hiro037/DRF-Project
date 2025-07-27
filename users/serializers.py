@@ -12,8 +12,8 @@ class PaymentSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         payment_method = data.get('payment_method')
-        course_id = self.context['request'].data.get('course_id')
-        lesson_id = self.context['request'].data.get('lesson_id')
+        course_id = self.context['request'].data.get('course')
+        lesson_id = self.context['request'].data.get('lesson')
 
         # Проверяем, что указан либо курс, либо урок, но не оба
         if not course_id and not lesson_id:
