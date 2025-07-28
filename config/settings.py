@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "django_filters",
     'rest_framework_simplejwt',
     'drf_yasg',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -159,3 +160,68 @@ SIMPLE_JWT = {
 
 #Настройки для Stripe
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+
+# Настройки для Celery
+
+# URL-адрес брокера сообщений
+CELERY_BROKER_URL = 'redis://localhost:6379' # Например, Redis, который по умолчанию работает на порту 6379
+
+# URL-адрес брокера результатов, также Redis
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+
+# Часовой пояс для работы Celery
+CELERY_TIMEZONE = TIME_ZONE
+
+# Флаг отслеживания выполнения задач
+CELERY_TASK_TRACK_STARTED = True
+
+# Максимальное время на выполнение задачи
+CELERY_TASK_TIME_LIMIT = 30 * 60
+
+#Настройки Celery-beat
+CELERY_BEAT_SCHEDULE = {
+    'task-name': {
+        'task': 'users.tasks.activity_check',  # Путь к задаче
+        'schedule': timedelta(days=1),  # Расписание выполнения задачи
+    },
+}
+
+# Брокер кеширования Redis
+CACHE_ENABLED = True
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+    }
+}
+
+# Настройки для электронной почты рассылки
+EMAIL = os.getenv("EMAIL")
+PASSWORD = os.getenv("PASSWORD")
+
+# Информация для gmail.com
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_HOST_USER = EMAIL
+EMAIL_HOST_PASSWORD = PASSWORD  # Cпециально сгенерированный пароль приложения
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+
+# Информация для mail.ru
+# EMAIL_HOST = 'smtp.mail.ru'
+# EMAIL_PORT = 2525
+# EMAIL_HOST_USER = EMAIL
+# EMAIL_HOST_PASSWORD = PASSWORD
+# EMAIL_USE_TLS = True
+# EMAIL_USE_SSL = False
+
+# Информация для yandex.ru
+# EMAIL_HOST = 'smtp.yandex.ru'
+# EMAIL_PORT = 465
+# EMAIL_HOST_USER = EMAIL
+# EMAIL_HOST_PASSWORD = PASSWORD
+# EMAIL_USE_TLS = False
+# EMAIL_USE_SSL = True
+
+SERVER_EMAIL = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
