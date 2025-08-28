@@ -66,6 +66,10 @@ jobs:
         ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
         chmod 600 ~/.ssh/known_hosts
 
+    - name: Copy project files to server
+      run: |
+        rsync -avz --exclude='__pycache__' . ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}
+
     - name: Verify pyproject.toml exists locally
       run: |
         if [ ! -f "pyproject.toml" ]; then
@@ -73,10 +77,6 @@ jobs:
           ls -la
           exit 1
         fi
-
-    - name: Copy project files to server
-      run: |
-        rsync -avz --include='pyproject.toml' --exclude='__pycache__' . ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}
 
     - name: Install dependencies on server with Poetry
       run: |
