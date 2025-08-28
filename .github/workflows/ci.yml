@@ -66,46 +66,41 @@ jobs:
         ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
         chmod 600 ~/.ssh/known_hosts
 
+    - name: Verify pyproject.toml exists locally
+      run: |
+        if [ ! -f "pyproject.toml" ]; then
+          echo "Error: pyproject.toml not found in repository!"
+          ls -la
+          exit 1
+        fi
+
     - name: Copy project files to server
       run: |
-        rsync -avz --exclude '__pycache__' . ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}
+        rsync -avz --include='pyproject.toml' --exclude='__pycache__' . ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}
 
     - name: Install dependencies on server with Poetry
       run: |
         ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
           cd ${{ secrets.DEPLOY_DIR }}
-          echo "Checking Python version..."
-          python3 --version
-          echo "Current directory: $(pwd)"
-          echo "Directory permissions:"
-          ls -ld .
-          sudo apt update || true
-          sudo apt install -y python3.12-venv
-          echo "Removing existing venv if it exists..."
-          rm -rf venv
-          echo "Creating new virtual environment..."
-          python3 -m venv venv
-          if [ ! -d "venv" ] || [ ! -f "venv/bin/activate" ]; then
-            echo "Failed to create virtual environment or activate file missing"
-            ls -l venv/bin || echo "venv/bin does not exist"
+          
+          # Проверяем наличие pyproject.toml
+          if [ ! -f "pyproject.toml" ]; then
+            echo "Error: pyproject.toml not found after deployment!"
+            echo "Files in directory:"
+            ls -la
             exit 1
           fi
+          
+          echo "Python version: $(python3 --version)"
+          echo "Current directory: $(pwd)"
+          sudo apt update || true
+          sudo apt install -y python3.12-venv
+          rm -rf venv
+          python3 -m venv venv
           source venv/bin/activate
-          echo "Virtual environment activated. Installing pip and poetry..."
-          python -m ensurepip --upgrade
           pip install --upgrade pip
           pip install poetry
           poetry install --no-root --only main
-        EOF
-
-    - name: Apply migrations on server
-      env:
-        SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-          cd ${{ secrets.DEPLOY_DIR }}
-          source venv/bin/activate
-          python manage.py migrate
         EOF
 
     - name: Collect static files on server
