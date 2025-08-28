@@ -33,9 +33,13 @@ jobs:
         poetry install
 
     - name: Run migrations
+      env:
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
       run: poetry run python manage.py migrate
 
     - name: Run tests
+      env:
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
       run: poetry run python manage.py test
 
   deploy:
@@ -66,6 +70,8 @@ jobs:
         EOF
 
     - name: Apply migrations on server
+      env:
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
       run: |
         ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
           cd ${{ secrets.DEPLOY_DIR }}
