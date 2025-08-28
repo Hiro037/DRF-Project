@@ -74,12 +74,25 @@ jobs:
       run: |
         ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
           cd ${{ secrets.DEPLOY_DIR }}
-          sudo apt update
+          echo "Checking Python version..."
+          python3 --version
+          echo "Current directory: $(pwd)"
+          echo "Directory permissions:"
+          ls -ld .
+          sudo apt update || true
           sudo apt install -y python3.12-venv
-          if [ ! -d "venv" ]; then
-            python3 -m venv venv
+          echo "Removing existing venv if it exists..."
+          rm -rf venv
+          echo "Creating new virtual environment..."
+          python3 -m venv venv
+          if [ ! -d "venv" ] || [ ! -f "venv/bin/activate" ]; then
+            echo "Failed to create virtual environment or activate file missing"
+            ls -l venv/bin || echo "venv/bin does not exist"
+            exit 1
           fi
           source venv/bin/activate
+          echo "Virtual environment activated. Installing pip and poetry..."
+          python -m ensurepip --upgrade
           pip install --upgrade pip
           pip install poetry
           poetry install --no-root --only main
