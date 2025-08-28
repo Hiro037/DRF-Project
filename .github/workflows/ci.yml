@@ -33,10 +33,10 @@ jobs:
         poetry install
 
     - name: Run migrations
-      run: python manage.py migrate
+      run: poetry run python manage.py migrate
 
     - name: Run tests
-      run: python manage.py test
+      run: poetry run python manage.py test
 
   deploy:
     runs-on: ubuntu-latest
