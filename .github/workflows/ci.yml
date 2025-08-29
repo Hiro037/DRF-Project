@@ -72,6 +72,7 @@ jobs:
 
     - name: Verify pyproject.toml exists locally
       run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
         cd ${{ secrets.DEPLOY_DIR }}
         echo "DEPLOY_DIR='${{ secrets.DEPLOY_DIR }}'"
         echo "PWD=$(pwd)"
