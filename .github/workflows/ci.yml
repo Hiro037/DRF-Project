@@ -68,11 +68,14 @@ jobs:
 
     - name: Copy project files to server
       run: |
-        rsync -avz --exclude='__pycache__' ./ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}
+        rsync -avz --exclude='__pycache__' ./ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/
 
     - name: Verify pyproject.toml exists locally
       run: |
         cd ${{ secrets.DEPLOY_DIR }}
+        echo "DEPLOY_DIR='${{ secrets.DEPLOY_DIR }}'"
+        echo "PWD=$(pwd)"
+        ls -la ${{ secrets.DEPLOY_DIR }}
         if [ ! -f "pyproject.toml" ]; then
           echo "Error: pyproject.toml not found in repository!"
           ls -la
