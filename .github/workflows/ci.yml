@@ -72,6 +72,7 @@ jobs:
 
     - name: Verify pyproject.toml exists locally
       run: |
+        cd ${{ secrets.DEPLOY_DIR }}
         if [ ! -f "pyproject.toml" ]; then
           echo "Error: pyproject.toml not found in repository!"
           ls -la
