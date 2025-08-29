@@ -78,9 +78,7 @@ jobs:
       run: |
         ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
           cd ${{ secrets.DEPLOY_DIR }}
-          
-          echo "Python version: $(python3 --version)"
-          echo "Current directory: $(pwd)"
+
           sudo apt update || true
           sudo apt install -y python3.12-venv
           rm -rf venv
@@ -100,10 +98,4 @@ jobs:
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" > .env
           source venv/bin/activate
           python3 manage.py collectstatic --noinput
-        EOF
-
-    - name: Restart application
-      run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-          sudo systemctl restart myapp.service
         EOF
