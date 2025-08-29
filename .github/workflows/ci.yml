@@ -96,7 +96,7 @@ jobs:
           sudo apt update || true
           sudo apt install -y python3.12-venv
           rm -rf venv
-          python3 -m venv venv
+          python -m venv venv
           source venv/bin/activate
           pip install --upgrade pip
           pip install poetry
