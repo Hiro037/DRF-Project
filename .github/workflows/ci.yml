@@ -55,6 +55,9 @@ jobs:
     needs: test
 
     steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+      
     - name: Set up SSH
       uses: webfactory/ssh-agent@v0.9.0
       with:
@@ -66,27 +69,9 @@ jobs:
         ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
         chmod 600 ~/.ssh/known_hosts
 
-    - name: Deploy with git
+    - name: Copy project files to server
       run: |
-        ssh -o StrictHostKeyChecking=no "${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}" << 'EOF'
-          cd ${{ secrets.DEPLOY_DIR }}
-          if [ ! -d .git ]; then
-            git init
-            git remote add origin git@github.com:Hiro037/DRF-Project.git
-            git fetch origin
-            git checkout develop -- .
-          else
-            git fetch origin
-            git checkout develop -- .
-          fi
-          # Ensure .gitignore exists to avoid tracking unwanted files
-          if [ ! -f .gitignore ]; then
-            echo "venv/" > .gitignore
-            echo "node_modules/" >> .gitignore
-            echo ".env" >> .gitignore
-            # Add other patterns to ignore as needed
-          fi
-        EOF
+        rsync -avz --exclude '__pycache__' . ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}
 
     - name: Verify pyproject.toml exists locally
       run: |
