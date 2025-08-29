@@ -72,12 +72,12 @@ jobs:
           cd ${{ secrets.DEPLOY_DIR }}
           if [ ! -d .git ]; then
             git init
-            git remote add origin git@github.com:OWNER/REPO.git
+            git remote add origin git@github.com:Hiro037/DRF-Project.git
             git fetch origin
-            git checkout main -- .
+            git checkout develop -- .
           else
             git fetch origin
-            git checkout main -- .
+            git checkout develop -- .
           fi
           # Ensure .gitignore exists to avoid tracking unwanted files
           if [ ! -f .gitignore ]; then
