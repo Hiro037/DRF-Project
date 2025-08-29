@@ -73,18 +73,6 @@ jobs:
       run: |
         rsync -avz --exclude '__pycache__' . ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}
 
-    - name: Verify pyproject.toml exists locally
-      run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-        cd ${{ secrets.DEPLOY_DIR }}
-        echo "DEPLOY_DIR='${{ secrets.DEPLOY_DIR }}'"
-        echo "PWD=$(pwd)"
-        ls -la ${{ secrets.DEPLOY_DIR }}
-        if [ ! -f "pyproject.toml" ]; then
-          echo "Error: pyproject.toml not found in repository!"
-          ls -la
-          exit 1
-        fi
 
     - name: Install dependencies on server with Poetry
       run: |
@@ -96,7 +84,7 @@ jobs:
           sudo apt update || true
           sudo apt install -y python3.12-venv
           rm -rf venv
-          python -m venv venv
+          python3 -m venv venv
           source venv/bin/activate
           pip install --upgrade pip
           pip install poetry
