@@ -12,43 +12,50 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v4
 
-    - name: Set up Python
+    - name: Set up Python 3.12
       uses: actions/setup-python@v4
       with:
         python-version: '3.12'
 
-    - name: Install dependencies
+    - name: Install Poetry
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install poetry
+
+    - name: Configure Poetry (no virtualenv)
+      run: |
+        poetry config virtualenvs.create false
+
+    - name: Install dependencies with Poetry
+      run: |
+        poetry install --no-interaction --no-root
 
     - name: Run linting (flake8)
       run: |
-        pip install flake8
-        flake8 . --count --show-source --statistics --max-line-length=120
+        poetry run flake8 . --count --show-source --statistics --max-line-length=120
 
     - name: Run tests with SQLite
       env:
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
         DEBUG: 1
       run: |
-        python manage.py test --settings=config.settings_ci
+        poetry run python manage.py test --settings=config.settings_ci
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
     - name: Build Docker images
       run: |
-        docker-compose -f docker-compose.yml build
+        poetry run docker-compose -f docker-compose.yml build
 
   deploy:
     runs-on: ubuntu-latest
-    needs: test-and-build # Запускать только если тесты и сборка прошли успешно
+    needs: test-and-build
     if: success()
 
     steps:
     - name: Check out code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up SSH
       uses: webfactory/ssh-agent@v0.9.0
@@ -91,9 +98,13 @@ jobs:
       run: |
         ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
           cd ${{ secrets.DEPLOY_DIR }}
+          # Останавливаем текущие контейнеры
           sudo docker-compose down
+          # Пересобираем и запускаем в фоновом режиме
           sudo docker-compose up --build -d
+          # Выполняем миграции
           sudo docker-compose exec -T web python manage.py migrate --noinput
+          # Собираем статические файлы
           sudo docker-compose exec -T web python manage.py collectstatic --noinput
         EOF
 
@@ -101,6 +112,8 @@ jobs:
       run: |
         ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
           cd ${{ secrets.DEPLOY_DIR }}
+          echo "=== Status of containers ==="
           sudo docker-compose ps
+          echo "=== Recent logs ==="
           sudo docker-compose logs --tail=20
         EOF
