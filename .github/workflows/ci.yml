@@ -26,6 +26,13 @@ jobs:
       run: |
         poetry config virtualenvs.create false
 
+    - name: Generate poetry.lock if missing
+      run: |
+        if [ ! -f poetry.lock ]; then
+          echo "poetry.lock not found, generating..."
+          poetry lock --no-update
+        fi
+
     - name: Install dependencies with Poetry
       run: |
         poetry install --no-interaction --no-root
@@ -59,6 +66,13 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v4
 
+    - name: Generate poetry.lock for deployment
+      run: |
+        pip install poetry
+        if [ ! -f poetry.lock ]; then
+          poetry lock --no-update
+        fi
+
     - name: Set up SSH
       uses: webfactory/ssh-agent@v0.9.0
       with:
@@ -72,6 +86,7 @@ jobs:
     - name: Copy project files to server
       run: |
         rsync -avz --delete \
+          --include 'poetry.lock' \
           --exclude '__pycache__' \
           --exclude '.git' \
           --exclude '.github' \
