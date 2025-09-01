@@ -118,14 +118,44 @@ jobs:
           echo "PASSWORD=${{ secrets.PASSWORD }}" >> .env
         EOF
 
-    - name: Deploy with Docker Compose
+    - name: Deploy with Database Backup and Fix
       run: |
         ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
           cd ${{ secrets.DEPLOY_DIR }}
+          
+          # 1. Создаем полный бэкап
+          echo "Creating database backup..."
+          sudo docker-compose exec -T db pg_dump -U ${{ secrets.DATABASE_USER }} \
+            -F c -b -v -f /tmp/backup.dump ${{ secrets.DATABASE_NAME }}
+          
+          # Копируем бэкап с контейнера на хост
+          sudo docker cp $(sudo docker-compose ps -q db):/tmp/backup.dump ./db_backup_$(date +%Y%m%d_%H%M%S).dump
+          
+          # 2. Останавливаем контейнеры
           sudo docker-compose down
+          
+          # 3. Полностью очищаем базу (удаляем volume)
+          sudo docker-compose down -v
+          
+          # 4. Запускаем чистую базу данных
+          sudo docker-compose up -d db
+          sleep 10
+          
+          # 5. Восстанавливаем бэкап в чистую базу
+          echo "Restoring backup to clean database..."
+          sudo docker cp ./db_backup_latest.dump $(sudo docker-compose ps -q db):/tmp/backup.dump
+          sudo docker-compose exec -T db pg_restore -U ${{ secrets.DATABASE_USER }} \
+            -d ${{ secrets.DATABASE_NAME }} -v -c /tmp/backup.dump
+          
+          # 6. Запускаем все сервисы
           sudo docker-compose up --build -d
+          sleep 10
+          
+          # 7. Выполняем миграции
           sudo docker-compose exec -T web python manage.py migrate --noinput
           sudo docker-compose exec -T web python manage.py collectstatic --noinput
+          
+          echo "Deployment completed with backup restoration!"
         EOF
 
     - name: Verify deployment
