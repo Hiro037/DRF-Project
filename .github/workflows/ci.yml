@@ -30,7 +30,10 @@ jobs:
       run: |
         if [ ! -f poetry.lock ]; then
           echo "poetry.lock not found, generating..."
-          poetry lock --no-update
+          poetry lock --no-interaction
+        else
+          echo "poetry.lock found, checking for updates..."
+          poetry lock --no-interaction
         fi
 
     - name: Install dependencies with Poetry
@@ -70,7 +73,11 @@ jobs:
       run: |
         pip install poetry
         if [ ! -f poetry.lock ]; then
-          poetry lock --no-update
+          echo "poetry.lock not found, generating..."
+          poetry lock --no-interaction
+        else
+          echo "poetry.lock found, checking for updates..."
+          poetry lock --no-interaction
         fi
 
     - name: Set up SSH
