@@ -80,11 +80,11 @@ jobs:
           --exclude 'htmlcov' \
           --exclude 'media' \
           --exclude 'staticfiles' \
-          ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_DIR }}
+          ./ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}
 
     - name: Copy environment file to server
       run: |
-        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+        ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
           cd ${{ secrets.DEPLOY_DIR }}
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" > .env
           echo "DATABASE_NAME=${{ secrets.DATABASE_NAME }}" >> .env
@@ -98,7 +98,7 @@ jobs:
 
     - name: Deploy with Docker Compose
       run: |
-        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+        ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
           cd ${{ secrets.DEPLOY_DIR }}
           sudo docker-compose down
           sudo docker-compose up --build -d
@@ -108,7 +108,7 @@ jobs:
 
     - name: Verify deployment
       run: |
-        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+        ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
           cd ${{ secrets.DEPLOY_DIR }}
           echo "=== Status of containers ==="
           sudo docker-compose ps
