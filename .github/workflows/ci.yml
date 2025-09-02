@@ -1,0 +1,169 @@
+name: Django CI/CD Pipeline
+
+on:
+  push:
+    branches: [ develop, homework-35-2 ]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install Poetry
+      run: |
+        python -m pip install --upgrade pip
+        pip install poetry
+
+    - name: Configure Poetry (no virtualenv)
+      run: |
+        poetry config virtualenvs.create false
+
+    - name: Generate poetry.lock if missing
+      run: |
+        if [ ! -f poetry.lock ]; then
+          echo "poetry.lock not found, generating..."
+          poetry lock --no-interaction
+        else
+          echo "poetry.lock found, checking for updates..."
+          poetry lock --no-interaction
+        fi
+
+    - name: Install dependencies with Poetry
+      run: |
+        poetry install --no-interaction --no-root
+
+    - name: Run tests with SQLite
+      env:
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        DEBUG: 1
+      run: |
+        poetry run python manage.py test --settings=config.settings_ci
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v2
+
+    - name: Set up Docker Compose
+      run: |
+        sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+        docker-compose --version
+
+    - name: Build Docker images
+      run: |
+        docker-compose -f docker-compose.yml build
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test-and-build
+    if: success()
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Generate poetry.lock for deployment
+      run: |
+        pip install poetry
+        if [ ! -f poetry.lock ]; then
+          echo "poetry.lock not found, generating..."
+          poetry lock --no-interaction
+        else
+          echo "poetry.lock found, checking for updates..."
+          poetry lock --no-interaction
+        fi
+
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_KEY }}
+
+    - name: Add server to known_hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+    - name: Copy project files to server
+      run: |
+        rsync -avz --delete \
+          --include 'poetry.lock' \
+          --exclude '__pycache__' \
+          --exclude '.git' \
+          --exclude '.github' \
+          --exclude '.idea' \
+          --exclude 'venv' \
+          --exclude 'htmlcov' \
+          --exclude 'media' \
+          --exclude 'staticfiles' \
+          ./ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}
+
+    - name: Copy environment file to server
+      run: |
+        ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+          cd ${{ secrets.DEPLOY_DIR }}
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" > .env
+          echo "DATABASE_NAME=${{ secrets.DATABASE_NAME }}" >> .env
+          echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> .env
+          echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
+          echo "DATABASE_PORT=5432" >> .env
+          echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" >> .env
+          echo "EMAIL=${{ secrets.EMAIL }}" >> .env
+          echo "PASSWORD=${{ secrets.PASSWORD }}" >> .env
+        EOF
+
+    - name: Deploy with Database Backup and Fix
+      run: |
+        ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+          cd ${{ secrets.DEPLOY_DIR }}
+          
+          # 1. Создаем полный бэкап
+          echo "Creating database backup..."
+          sudo docker-compose exec -T db pg_dump -U ${{ secrets.DATABASE_USER }} \
+            -F c -b -v -f /tmp/backup.dump ${{ secrets.DATABASE_NAME }}
+          
+          # Копируем бэкап с контейнера на хост
+          sudo docker cp $(sudo docker-compose ps -q db):/tmp/backup.dump ./db_backup_$(date +%Y%m%d_%H%M%S).dump
+          
+          # 2. Останавливаем контейнеры
+          sudo docker-compose down
+          
+          # 3. Полностью очищаем базу (удаляем volume)
+          sudo docker-compose down -v
+          
+          # 4. Запускаем чистую базу данных
+          sudo docker-compose up -d db
+          sleep 10
+          
+          # 5. Восстанавливаем бэкап в чистую базу
+          echo "Restoring backup to clean database..."
+          sudo docker cp ./db_backup_latest.dump $(sudo docker-compose ps -q db):/tmp/backup.dump
+          sudo docker-compose exec -T db pg_restore -U ${{ secrets.DATABASE_USER }} \
+            -d ${{ secrets.DATABASE_NAME }} -v -c /tmp/backup.dump
+          
+          # 6. Запускаем все сервисы
+          sudo docker-compose up --build -d
+          sleep 10
+          
+          # 7. Выполняем миграции
+          sudo docker-compose exec -T web python manage.py migrate --noinput
+          sudo docker-compose exec -T web python manage.py collectstatic --noinput
+          
+          echo "Deployment completed with backup restoration!"
+        EOF
+
+    - name: Verify deployment
+      run: |
+        ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+          cd ${{ secrets.DEPLOY_DIR }}
+          echo "=== Status of containers ==="
+          sudo docker-compose ps
+          echo "=== Recent logs ==="
+          sudo docker-compose logs --tail=20
+        EOF

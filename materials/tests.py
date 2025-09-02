@@ -52,7 +52,9 @@ class LessonAndSubscriptionTests(TestCase):
         self.course = Course.objects.create(
             title='Test Course',
             description='Test Course Description',
-            owner=self.owner_user
+            owner=self.owner_user,
+            price=100.00,
+            image=create_test_image()
         )
 
         # Создаем урок
@@ -61,7 +63,9 @@ class LessonAndSubscriptionTests(TestCase):
             description='Test Lesson Description',
             video='https://youtube.com/watch?v=test',
             course=self.course,
-            owner=self.owner_user
+            owner=self.owner_user,
+            price=50.00,
+            image=create_test_image()
         )
 
         # URL для запросов
@@ -82,7 +86,8 @@ class LessonAndSubscriptionTests(TestCase):
             'image': image,
             'video': 'https://youtube.com/watch?v=new_video',
             'course': self.course.id,
-            'owner': self.admin_user.id
+            'owner': self.admin_user.id,
+            'price': 50.0
         }
         response = self.client.post(self.lesson_list_url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -99,7 +104,8 @@ class LessonAndSubscriptionTests(TestCase):
             'image': image,
             'video': 'https://youtube.com/watch?v=new_video',
             'course': self.course.id,
-            'owner': self.owner_user.id
+            'owner': self.owner_user.id,
+            'price': 50.0
         }
         response = self.client.post(self.lesson_list_url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -116,7 +122,8 @@ class LessonAndSubscriptionTests(TestCase):
             'image': image,
             'video': 'https://youtube.com/watch?v=new_video',
             'course': self.course.id,
-            'owner': self.moderator_user.id
+            'owner': self.moderator_user.id,
+            'price': 50.0
         }
         response = self.client.post(self.lesson_list_url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -131,7 +138,8 @@ class LessonAndSubscriptionTests(TestCase):
             'image': image,
             'video': 'https://youtube.com/watch?v=new_video',
             'course': self.course.id,
-            'owner': self.regular_user.id
+            'owner': self.regular_user.id,
+            'price': 50.0
         }
         response = self.client.post(self.lesson_list_url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -148,7 +156,8 @@ class LessonAndSubscriptionTests(TestCase):
             'image': image,
             'video': 'https://vimeo.com/new_video',
             'course': self.course.id,
-            'owner': self.admin_user.id
+            'owner': self.admin_user.id,
+            'price': 50.0
         }
         response = self.client.post(self.lesson_list_url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -163,7 +172,8 @@ class LessonAndSubscriptionTests(TestCase):
             'image': image,
             'video': 'https://youtube.com/watch?v=new_video',
             'course': self.course.id,
-            'owner': self.admin_user.id
+            'owner': self.admin_user.id,
+            'price': 50.0
         }
         response = self.client.post(self.lesson_list_url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -178,7 +188,8 @@ class LessonAndSubscriptionTests(TestCase):
             'image': image,
             'video': 'https://youtube.com/watch?v=new_video',
             'course': self.course.id,
-            'owner': self.admin_user.id
+            'owner': self.admin_user.id,
+            'price': 50.0
         }
         response = self.client.post(self.lesson_list_url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -193,7 +204,8 @@ class LessonAndSubscriptionTests(TestCase):
             'image': image,
             'video': 'https://youtube.com/watch?v=new_video',
             'course': self.course.id,
-            'owner': self.admin_user.id
+            'owner': self.admin_user.id,
+            'price': 50.0
         }
         response = self.client.post(self.lesson_list_url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -220,7 +232,8 @@ class LessonAndSubscriptionTests(TestCase):
             'image': image,
             'video': 'https://youtube.com/watch?v=updated_video',
             'course': self.course.id,
-            'owner': self.owner_user.id
+            'owner': self.owner_user.id,
+            'price': 50.0
         }
         response = self.client.put(self.lesson_detail_url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -235,7 +248,8 @@ class LessonAndSubscriptionTests(TestCase):
             'image': image,
             'video': 'https://youtube.com/watch?v=updated_video',
             'course': self.course.id,
-            'owner': self.owner_user.id
+            'owner': self.owner_user.id,
+            'price': 50.0
         }
         response = self.client.put(self.lesson_detail_url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -252,7 +266,8 @@ class LessonAndSubscriptionTests(TestCase):
             'image': image,
             'video': 'https://youtube.com/watch?v=updated_video',
             'course': self.course.id,
-            'owner': self.owner_user.id
+            'owner': self.owner_user.id,
+            'price': 50.0
         }
         response = self.client.put(self.lesson_detail_url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -269,7 +284,8 @@ class LessonAndSubscriptionTests(TestCase):
             'image': image,
             'video': 'https://youtube.com/watch?v=updated_video',
             'course': self.course.id,
-            'owner': self.owner_user.id
+            'owner': self.owner_user.id,
+            'price': 50.0
         }
         response = self.client.put(self.lesson_detail_url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -284,7 +300,8 @@ class LessonAndSubscriptionTests(TestCase):
             'image': image,
             'video': 'https://vimeo.com/updated_video',
             'course': self.course.id,
-            'owner': self.owner_user.id
+            'owner': self.owner_user.id,
+            'price': 50.0
         }
         response = self.client.put(self.lesson_detail_url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -298,7 +315,8 @@ class LessonAndSubscriptionTests(TestCase):
             'image': image,
             'video': 'https://youtube.com/watch?v=updated_video',
             'course': self.course.id,
-            'owner': self.owner_user.id
+            'owner': self.owner_user.id,
+            'price': 50.0
         }
         response = self.client.put(self.lesson_detail_url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
